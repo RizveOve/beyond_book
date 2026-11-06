@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>BeyondBook Target Compiler</title>
+    <style>
+      :root { font-family: system-ui, sans-serif; color: #1d1d1d; background: #fbf6ea; }
+      body { margin: 0; padding: 24px 16px; }
+      main { max-width: 560px; margin: 0 auto; }
+      h1 { font-family: Georgia, serif; margin: 0 0 6px; }
+      p { line-height: 1.5; color: #5b5750; }
+      img { max-width: 100%; max-height: 360px; display: block; margin: 16px 0; border: 1px solid #ccc; }
+      button { font: inherit; padding: 12px 18px; border: 0; border-radius: 999px; background: #b8322b; color: #fff; font-weight: 700; cursor: pointer; }
+      button:disabled { opacity: 0.5; }
+      progress { width: 100%; height: 14px; margin-top: 16px; }
+      #status { font-family: ui-monospace, monospace; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Target compiler</h1>
+      <p>
+        Turns a page image into the <code>.mind</code> file MindAR uses for tracking. Save the result
+        as <code>public/targets/heart.mind</code>. Pick images with lots of detail and contrast.
+      </p>
+      <input id="file" type="file" accept="image/*" />
+      <img id="preview" alt="" hidden />
+      <button id="compile" disabled>Compile</button>
+      <progress id="progress" max="100" value="0" hidden></progress>
+      <p id="status"></p>
+    </main>
+    <script type="module" src="/src/compile/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# MindAR's compiled tracking data
+[[headers]]
+  for = "/targets/*.mind"
+  [headers.values]
+    Content-Type = "application/octet-stream"

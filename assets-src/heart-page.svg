@@ -1,0 +1,144 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="1754" viewBox="0 0 1240 1754">
+  <!--
+    BeyondBook printable target page: "The Human Heart".
+    Designed to be feature-rich (text, outlines, hatching, irregular shapes)
+    so MindAR's image tracker finds plenty of stable keypoints.
+  -->
+  <defs>
+    <linearGradient id="muscle" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e2574c"/>
+      <stop offset="0.55" stop-color="#b8322b"/>
+      <stop offset="1" stop-color="#7a1c18"/>
+    </linearGradient>
+    <linearGradient id="artery" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#f06a5a"/>
+      <stop offset="1" stop-color="#c1362c"/>
+    </linearGradient>
+    <linearGradient id="vein" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5b8fd6"/>
+      <stop offset="1" stop-color="#2f5ea8"/>
+    </linearGradient>
+    <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#5c1411" stroke-width="2" opacity="0.35"/>
+    </pattern>
+    <pattern id="paper" width="28" height="28" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="6" r="1.2" fill="#d9cdb4"/>
+      <circle cx="18" cy="20" r="1" fill="#d9cdb4"/>
+      <circle cx="24" cy="4" r="0.8" fill="#d9cdb4"/>
+    </pattern>
+  </defs>
+
+  <!-- Paper -->
+  <rect width="1240" height="1754" fill="#fbf6ea"/>
+  <rect width="1240" height="1754" fill="url(#paper)"/>
+
+  <!-- Ornamental border -->
+  <rect x="40" y="40" width="1160" height="1674" fill="none" stroke="#2b2b2b" stroke-width="6"/>
+  <rect x="58" y="58" width="1124" height="1638" fill="none" stroke="#2b2b2b" stroke-width="2"/>
+  <g fill="#2b2b2b">
+    <path d="M58 58 l60 0 l-60 60 z"/>
+    <path d="M1182 58 l-60 0 l60 60 z"/>
+    <path d="M58 1696 l60 0 l-60 -60 z"/>
+    <path d="M1182 1696 l-60 0 l60 -60 z"/>
+  </g>
+
+  <!-- Header -->
+  <text x="620" y="150" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="74" font-weight="bold" fill="#1d1d1d">The Human Heart</text>
+  <text x="620" y="200" text-anchor="middle" font-family="Georgia, serif" font-size="28" font-style="italic" fill="#444">Chapter 4 · The Circulatory System · Anterior View</text>
+  <line x1="160" y1="228" x2="1080" y2="228" stroke="#2b2b2b" stroke-width="3"/>
+  <g fill="#b8322b"><circle cx="620" cy="228" r="9"/><circle cx="590" cy="228" r="5"/><circle cx="650" cy="228" r="5"/></g>
+
+  <!-- ===== Heart illustration ===== -->
+  <g transform="translate(0,30)" stroke="#3a0d0b" stroke-linejoin="round" stroke-linecap="round">
+    <!-- Superior vena cava -->
+    <path d="M440 330 L440 600 Q440 640 470 650 L520 650 L520 330 Z" fill="url(#vein)" stroke-width="5"/>
+    <!-- Inferior vena cava -->
+    <path d="M420 1010 L420 1150 L490 1150 L490 1000 Z" fill="url(#vein)" stroke-width="5"/>
+    <!-- Descending aorta (behind) -->
+    <path d="M780 560 L780 1120 L850 1120 L850 560 Z" fill="#a52d25" stroke-width="5"/>
+
+    <!-- Aortic arch + branches -->
+    <path d="M560 760 C540 600 560 470 660 430 C760 395 840 450 850 560 L780 580 C772 505 730 488 680 500 C625 515 615 610 640 760 Z" fill="url(#artery)" stroke-width="5"/>
+    <path d="M610 455 L585 300 L630 295 L650 445 Z" fill="url(#artery)" stroke-width="5"/>
+    <path d="M680 428 L690 280 L730 282 L718 425 Z" fill="url(#artery)" stroke-width="5"/>
+    <path d="M760 432 L800 300 L840 312 L800 448 Z" fill="url(#artery)" stroke-width="5"/>
+
+    <!-- Pulmonary trunk and arteries -->
+    <path d="M650 800 C640 700 660 630 720 610 L860 590 L1000 600 L995 650 L880 650 C820 655 760 680 740 720 C730 760 735 790 745 810 Z" fill="url(#vein)" stroke-width="5"/>
+    <path d="M700 640 L560 600 L450 610 L455 655 L560 650 L680 690 Z" fill="url(#vein)" stroke-width="5"/>
+
+    <!-- Right atrium -->
+    <path d="M380 690 C330 720 320 820 360 890 C390 940 450 960 500 940 L540 760 C520 690 450 660 380 690 Z" fill="url(#muscle)" stroke-width="5"/>
+    <path d="M380 690 C350 670 330 690 345 720 C355 740 370 735 385 720 Z" fill="#c43c32" stroke-width="4"/>
+    <!-- Left atrium / auricle -->
+    <path d="M820 720 C880 690 950 700 960 750 C970 800 920 820 880 810 C850 800 830 770 820 720 Z" fill="url(#muscle)" stroke-width="5"/>
+
+    <!-- Ventricles (main body) -->
+    <path d="M500 780 C560 760 650 790 720 780 C800 770 880 760 930 800 C990 850 990 960 950 1060 C900 1180 820 1270 720 1360 C700 1378 685 1380 670 1362 C590 1280 470 1150 420 1040 C385 960 420 820 500 780 Z" fill="url(#muscle)" stroke-width="6"/>
+    <!-- Muscle hatching -->
+    <path d="M500 780 C560 760 650 790 720 780 C800 770 880 760 930 800 C990 850 990 960 950 1060 C900 1180 820 1270 720 1360 C700 1378 685 1380 670 1362 C590 1280 470 1150 420 1040 C385 960 420 820 500 780 Z" fill="url(#hatch)" stroke="none"/>
+    <!-- Interventricular groove + coronary vessels -->
+    <path d="M720 790 C700 900 690 1050 690 1150 C690 1250 695 1320 690 1360" fill="none" stroke="#f5d36b" stroke-width="10"/>
+    <path d="M720 790 C700 900 690 1050 690 1150 C690 1250 695 1320 690 1360" fill="none" stroke="#3a0d0b" stroke-width="3"/>
+    <path d="M700 900 C760 930 820 920 870 960" fill="none" stroke="#f5d36b" stroke-width="6"/>
+    <path d="M695 1020 C640 1050 590 1040 540 1060" fill="none" stroke="#f5d36b" stroke-width="6"/>
+    <path d="M692 1150 C750 1180 790 1170 840 1190" fill="none" stroke="#f5d36b" stroke-width="5"/>
+    <path d="M520 800 C470 860 450 950 470 1050" fill="none" stroke="#f5d36b" stroke-width="7"/>
+    <path d="M470 900 C510 910 540 890 560 920" fill="none" stroke="#f5d36b" stroke-width="4"/>
+    <!-- Highlights -->
+    <path d="M520 850 C560 830 600 840 610 870" fill="none" stroke="#ffb3a8" stroke-width="8" opacity="0.7"/>
+    <path d="M800 840 C850 830 900 860 905 900" fill="none" stroke="#ffb3a8" stroke-width="8" opacity="0.7"/>
+  </g>
+
+  <!-- ===== Labels ===== -->
+  <g font-family="Helvetica, Arial, sans-serif" font-size="27" fill="#1d1d1d" stroke="none">
+    <g stroke="#1d1d1d" stroke-width="2.5" fill="none">
+      <polyline points="480,420 300,420 260,420"/>
+      <polyline points="440,980 300,1060 250,1060"/>
+      <polyline points="400,800 260,760 230,760"/>
+      <polyline points="520,1180 330,1300 260,1300"/>
+      <polyline points="830,500 960,430 1000,430"/>
+      <polyline points="970,640 1000,640"/>
+      <polyline points="930,770 1000,820 1000,820"/>
+      <polyline points="880,1100 980,1180 1000,1180"/>
+      <polyline points="820,1040 980,1040 1000,1040"/>
+    </g>
+    <g fill="#1d1d1d">
+      <circle cx="480" cy="420" r="6"/><circle cx="440" cy="980" r="6"/><circle cx="400" cy="800" r="6"/>
+      <circle cx="520" cy="1180" r="6"/><circle cx="830" cy="500" r="6"/><circle cx="970" cy="640" r="6"/>
+      <circle cx="930" cy="770" r="6"/><circle cx="880" cy="1100" r="6"/><circle cx="820" cy="1040" r="6"/>
+    </g>
+    <text x="100" y="410">Superior</text><text x="100" y="442">vena cava</text>
+    <text x="100" y="1050">Inferior</text><text x="100" y="1082">vena cava</text>
+    <text x="100" y="750">Right</text><text x="100" y="782">atrium</text>
+    <text x="100" y="1290">Right</text><text x="100" y="1322">ventricle</text>
+    <text x="1012" y="420">Aortic</text><text x="1012" y="452">arch</text>
+    <text x="1012" y="632">Pulmonary</text><text x="1012" y="664">artery</text>
+    <text x="1012" y="812">Left</text><text x="1012" y="844">atrium</text>
+    <text x="1012" y="1172">Left</text><text x="1012" y="1204">ventricle</text>
+    <text x="1012" y="1032">Coronary</text><text x="1012" y="1064">artery</text>
+  </g>
+
+  <!-- Figure caption -->
+  <text x="620" y="1460" text-anchor="middle" font-family="Georgia, serif" font-size="26" font-style="italic" fill="#333">Figure 4.2 — Major chambers and vessels of the heart.</text>
+
+  <!-- Fact boxes -->
+  <g font-family="Helvetica, Arial, sans-serif">
+    <rect x="110" y="1500" width="320" height="140" rx="14" fill="#fff" stroke="#b8322b" stroke-width="4"/>
+    <text x="135" y="1545" font-size="30" font-weight="bold" fill="#b8322b">≈100,000</text>
+    <text x="135" y="1582" font-size="22" fill="#333">beats every day</text>
+    <text x="135" y="1612" font-size="22" fill="#333">at a resting rate</text>
+
+    <rect x="460" y="1500" width="320" height="140" rx="14" fill="#fff" stroke="#2f5ea8" stroke-width="4"/>
+    <text x="485" y="1545" font-size="30" font-weight="bold" fill="#2f5ea8">4 chambers</text>
+    <text x="485" y="1582" font-size="22" fill="#333">2 atria receive blood,</text>
+    <text x="485" y="1612" font-size="22" fill="#333">2 ventricles pump it</text>
+
+    <rect x="810" y="1500" width="320" height="140" rx="14" fill="#fff" stroke="#2b2b2b" stroke-width="4"/>
+    <text x="835" y="1545" font-size="30" font-weight="bold" fill="#2b2b2b">Scan me!</text>
+    <text x="835" y="1582" font-size="22" fill="#333">Open BeyondBook and</text>
+    <text x="835" y="1612" font-size="22" fill="#333">point your camera here</text>
+  </g>
+
+  <text x="620" y="1688" text-anchor="middle" font-family="Georgia, serif" font-size="22" fill="#555">— 47 —</text>
+</svg>
