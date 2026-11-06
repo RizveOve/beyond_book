@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { HEART_PARTS } from '../content/heartParts';
 import type { HeartExperience } from '../three/HeartExperience';
 
 interface Props {
@@ -9,28 +8,37 @@ interface Props {
 }
 
 const BPM_PRESETS = [
-  { bpm: 72, label: 'Resting · 72 bpm' },
-  { bpm: 130, label: 'Running · 130 bpm' },
-  { bpm: 45, label: 'Sleeping · 45 bpm' },
+  { bpm: 72, label: 'Resting · 72' },
+  { bpm: 130, label: 'Running · 130' },
+  { bpm: 45, label: 'Sleeping · 45' },
 ];
 
-/** Info card for the tapped part plus heartbeat / view controls. */
+/** Info card for the tapped part plus the model's tool bar. */
 export function HeartHUD({ heart, selected, onClose }: Props) {
   const [beating, setBeating] = useState(heart.isBeating);
+  const [labels, setLabels] = useState(heart.isLabelsOn);
+  const [exploded, setExploded] = useState(heart.isExploded);
+  const [spinning, setSpinning] = useState(heart.isAutoRotating);
   const [presetIdx, setPresetIdx] = useState(() =>
     Math.max(0, BPM_PRESETS.findIndex((p) => p.bpm === heart.currentBpm)),
   );
-  const part = selected ? HEART_PARTS[selected] : null;
+  const part = selected ? heart.partInfo[selected] : null;
 
-  const toggleBeat = () => {
-    heart.setBeating(!beating);
-    setBeating(!beating);
+  const toggle = (value: boolean, apply: (v: boolean) => void, set: (v: boolean) => void) => {
+    apply(!value);
+    set(!value);
   };
 
   const cycleBpm = () => {
     const next = (presetIdx + 1) % BPM_PRESETS.length;
     heart.setBpm(BPM_PRESETS[next].bpm);
     setPresetIdx(next);
+  };
+
+  const reset = () => {
+    heart.resetView();
+    setExploded(false);
+    setSpinning(false);
   };
 
   return (
@@ -50,17 +58,46 @@ export function HeartHUD({ heart, selected, onClose }: Props) {
           </p>
         </section>
       ) : (
-        <p className="hint">Tap a part of the heart to learn about it · drag to rotate · pinch to zoom</p>
+        <p className="hint">Tap a part to learn about it · drag to turn · pinch to zoom</p>
       )}
 
-      <div className="controls">
-        <button onClick={toggleBeat} aria-pressed={beating}>
-          {beating ? '❚❚ Pause beat' : '▶ Play beat'}
+      <div className="toolbar" role="toolbar" aria-label="Model tools">
+        <button
+          onClick={() => toggle(beating, (v) => heart.setBeating(v), setBeating)}
+          aria-pressed={beating}
+        >
+          <span aria-hidden>{beating ? '❚❚' : '▶'}</span> Beat
         </button>
-        <button onClick={cycleBpm} disabled={!beating}>
-          ♥ {BPM_PRESETS[presetIdx].label}
+        <button onClick={cycleBpm} disabled={!beating} title="Change heart rate">
+          <span aria-hidden>♥</span> {BPM_PRESETS[presetIdx].label}
         </button>
-        <button onClick={() => heart.resetView()}>↺ Reset</button>
+        <button
+          onClick={() => toggle(labels, (v) => heart.setLabels(v), setLabels)}
+          aria-pressed={labels}
+        >
+          <span aria-hidden>Aa</span> Labels
+        </button>
+        <button
+          onClick={() => toggle(exploded, (v) => heart.setExploded(v), setExploded)}
+          aria-pressed={exploded}
+        >
+          <span aria-hidden>✣</span> Explode
+        </button>
+        <button
+          onClick={() => toggle(spinning, (v) => heart.setAutoRotate(v), setSpinning)}
+          aria-pressed={spinning}
+        >
+          <span aria-hidden>⟳</span> Spin
+        </button>
+        <button onClick={() => heart.zoomBy(1 / 1.35)} aria-label="Zoom out">
+          −
+        </button>
+        <button onClick={() => heart.zoomBy(1.35)} aria-label="Zoom in">
+          +
+        </button>
+        <button onClick={reset}>
+          <span aria-hidden>↺</span> Reset
+        </button>
       </div>
     </div>
   );

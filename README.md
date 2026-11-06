@@ -1,6 +1,6 @@
 # BeyondBook — WebAR heart MVP
 
-Point a phone camera at a printed heart illustration and an interactive, beating 3D heart appears on top of the page.
+Point a phone camera at a printed (black & white) heart illustration and a detailed, interactive, beating 3D heart appears on top of the page. Move the camera away and the heart **stays on screen** as a free-floating model until the camera finds a page again.
 
 **Stack:** React + TypeScript + Vite · MindAR (image tracking) · Three.js (rendering) · GLB model
 
@@ -17,10 +17,11 @@ The dev server runs over **HTTPS** on your LAN. Phones only allow camera access 
 2. On your phone, open the `https://<your-LAN-IP>:5173` address that Vite prints. The phone and computer must be on the same Wi-Fi.
 3. Accept the self-signed certificate warning, then tap **Start AR** and allow the camera.
 4. Point the camera at the page. Then:
-   - **Tap** a part to see what it does.
-   - **Drag** to rotate the heart.
-   - **Pinch** to zoom.
-   - Use the buttons to pause the heartbeat or switch the heart rate (resting, running, sleeping).
+   - **Tap** a part to read about it. The other parts fade out so the selected one stands out.
+   - **Drag** sideways to turn the heart, or up and down to tilt it.
+   - **Pinch** to zoom, or use the **− / +** buttons.
+   - The toolbar also has **Beat** (pause or play), the heart rate (resting, running or sleeping), **Labels**, **Explode** (pulls the parts apart), **Spin** (auto-rotate) and **Reset**.
+5. Move the camera off the page. The heart glides to the middle of the screen and stays fully interactive ("Free view"). Point at a page again and it snaps back onto it. If that's a different page in the target list, its own model loads.
 
 **View in 3D without camera** on the home screen shows the same heart without AR. Use it on a desktop or when you don't have the page.
 
@@ -29,9 +30,10 @@ The dev server runs over **HTTPS** on your LAN. Phones only allow camera access 
 ```
 src/
   ar/MindARThree.ts        Typed MindAR ↔ three.js bridge (camera feed, tracking, projection)
-  three/HeartExperience.ts Model loading/normalising, heartbeat, tap-to-select, rotate/zoom
+  three/HeartExperience.ts Model loading, heartbeat, tap-to-select/focus, labels, explode, rotate/zoom
   three/gestures.ts        Tap / drag / pinch pointer gestures
   content/heartParts.ts    Educational text per heart part (keyed by mesh name)
+  content/targets.ts       Page ↔ model registry (which model appears on which page)
   components/              ARView, PreviewView, HeartHUD (info card + controls)
   compile/main.ts          In-browser .mind target compiler (served at /compile.html)
 public/
@@ -53,7 +55,9 @@ MindAR's bundled three.js wrapper imports `sRGBEncoding`, which modern three.js 
 **A different page or illustration.**
 1. Put the image in `public/targets/`.
 2. Compile it by running `npm run assets:target -- public/targets/your-page.png public/targets/heart.mind`. This needs Chrome installed; set `CHROME_PATH` if it's somewhere unusual. You can also open `/compile.html` in the dev server and upload the image there.
-3. Change `HEART_OFFSET` and `HEART_SIZE` in `src/components/ARView.tsx` so the model sits over the drawing. One unit equals the page width, and the origin is the centre of the page.
+3. Change `size`, `offset` and `lift` for that page in `src/content/targets.ts` so the model sits over the drawing. One unit equals the page width, and the origin is the centre of the page.
+
+**More pages, each with its own model.** Open `/compile.html`, select all the page images in order and save the result as `public/targets/heart.mind`. Then add one entry per page to `TARGETS` in `src/content/targets.ts`, in the same order. When the camera recognises a different page, the floating model switches to that page's model.
 
 Images that track well have lots of detail and high contrast, such as text, outlines and texture. Flat colour areas and repeating patterns track badly.
 
@@ -66,10 +70,10 @@ Images that track well have lots of detail and high contrast, such as text, outl
 | `npm run assets` | Rebuild all generated assets (the three commands below) |
 | `npm run assets:page` | Render `assets-src/heart-page.svg` to the printable PNG |
 | `npm run assets:target` | Compile the PNG into `heart.mind` (uses headless Chrome) |
-| `npm run assets:model` | Rebuild the procedural `heart.glb` |
+| `npm run assets:model` | Rebuild the procedural `heart.glb` and compress it (meshopt) |
 | `node scripts/smoke-test.mjs` | End-to-end test with no phone (details below) |
 
-The smoke test feeds Chrome a fake webcam that shows the page on a desk. It then checks that MindAR locks on and that tapping selects a part, and saves screenshots to `smoke-output/`.
+The smoke test feeds Chrome a fake webcam that alternates between the page on a desk and an empty desk. It checks that MindAR locks on, that the heart stays on screen when the page disappears, that tapping, labels and explode work, and that the heart re-anchors when the page returns. Screenshots go to `smoke-output/`.
 
 ## Deploying
 
@@ -77,8 +81,9 @@ The smoke test feeds Chrome a fake webcam that shows the page on a desk. It then
 
 ## Known limitations
 
-- The included heart is a stylised model built in code, made for teaching rather than for clinical accuracy. Replace it with a scanned or artist-made model for production.
-- MindAR includes TensorFlow.js, so the first load is about 500 KB gzipped of JS plus a 2 MB model and a 0.8 MB target. Tracking needs good lighting and works best when the page fills most of the camera view.
+- The included heart is a greyscale model built in code, made for teaching rather than for clinical accuracy. Replace it with a scanned or artist-made model for production.
+- In free view the heart is fixed to the screen, not to the room: MindAR tracks images only and has no world tracking.
+- MindAR includes TensorFlow.js, so the first load is about 500 KB gzipped of JS plus a 1.3 MB model and a 0.8 MB target. Tracking needs good lighting and works best when the page fills most of the camera view.
 
 ### Netlify
 

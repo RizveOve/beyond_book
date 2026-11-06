@@ -3,8 +3,8 @@ import * as THREE from 'three';
 export interface GestureHandlers {
   /** Tap at normalised device coordinates (-1..1). */
   onTap?: (ndc: THREE.Vector2) => void;
-  /** Horizontal one-finger drag, in pixels. */
-  onDrag?: (dx: number) => void;
+  /** One-finger drag delta, in pixels. */
+  onDrag?: (dx: number, dy: number) => void;
   /** Two-finger pinch; factor > 1 means spread (zoom in). */
   onPinch?: (factor: number) => void;
 }
@@ -49,7 +49,7 @@ export function attachGestures(el: HTMLElement, h: GestureHandlers): () => void 
 
     if (pointers.size === 1) {
       moved = Math.max(moved, Math.hypot(cur.x - start.x, cur.y - start.y));
-      if (moved > TAP_MAX_MOVE) h.onDrag?.(cur.x - prev.x);
+      if (moved > TAP_MAX_MOVE) h.onDrag?.(cur.x - prev.x, cur.y - prev.y);
     } else if (pointers.size === 2) {
       const d = dist();
       if (pinchDist > 0) h.onPinch?.(d / pinchDist);

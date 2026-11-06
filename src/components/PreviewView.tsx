@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { HEART_MODEL_URL, HeartExperience, addLights } from '../three/HeartExperience';
+import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
+import { TARGETS } from '../content/targets';
+import { HeartExperience, addLights } from '../three/HeartExperience';
 import { attachGestures } from '../three/gestures';
 import { HeartHUD } from './HeartHUD';
+
+const TARGET = TARGETS[0];
 
 /** Camera-free 3D viewer: handy on desktop or when no printed page is at hand. */
 export function PreviewView({ onExit }: { onExit: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [heart] = useState(() => new HeartExperience());
+  const [heart] = useState(() => new HeartExperience(TARGET.parts));
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -19,8 +23,16 @@ export function PreviewView({ onExit }: { onExit: () => void }) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     container.appendChild(renderer.domElement);
 
+    const labelRenderer = new CSS2DRenderer();
+    Object.assign(labelRenderer.domElement.style, {
+      position: 'absolute',
+      inset: '0',
+      pointerEvents: 'none',
+    });
+    container.appendChild(labelRenderer.domElement);
+
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#14161c');
+    scene.background = new THREE.Color('#16171a');
     addLights(scene);
     scene.add(heart.root);
 
@@ -30,7 +42,10 @@ export function PreviewView({ onExit }: { onExit: () => void }) {
     const resize = () => {
       const { clientWidth: w, clientHeight: h } = container;
       renderer.setSize(w, h);
+      labelRenderer.setSize(w, h);
       camera.aspect = w / h;
+      // Keep the whole heart in view on narrow (portrait) screens.
+      camera.position.z = 2.6 / Math.min(1, (w / h) * 1.6);
       camera.updateProjectionMatrix();
     };
     resize();
@@ -39,20 +54,24 @@ export function PreviewView({ onExit }: { onExit: () => void }) {
     heart.setSelectListener(setSelected);
     const detach = attachGestures(renderer.domElement, {
       onTap: (ndc) => heart.pick(ndc, camera),
-      onDrag: (dx) => heart.rotateBy(dx * 0.01),
+      onDrag: (dx, dy) => {
+        heart.rotateBy(dx * 0.01);
+        heart.tiltBy(dy * 0.008);
+      },
       onPinch: (f) => heart.zoomBy(f),
     });
 
     const clock = new THREE.Clock();
     let cancelled = false;
     heart
-      .load(HEART_MODEL_URL, 1)
+      .load(TARGET.modelUrl, 1)
       .then(() => !cancelled && setLoading(false))
       .catch((e) => console.error(e));
 
     renderer.setAnimationLoop(() => {
       heart.update(clock.getDelta());
       renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
     });
 
     return () => {
@@ -63,6 +82,7 @@ export function PreviewView({ onExit }: { onExit: () => void }) {
       renderer.setAnimationLoop(null);
       renderer.dispose();
       renderer.domElement.remove();
+      labelRenderer.domElement.remove();
     };
   }, [heart]);
 

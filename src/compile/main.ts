@@ -37,30 +37,37 @@ window.__compileTarget = async (url) => {
 
 // ---- Interactive UI ----
 const fileInput = document.querySelector<HTMLInputElement>('#file')!;
-const preview = document.querySelector<HTMLImageElement>('#preview')!;
+const previews = document.querySelector<HTMLDivElement>('#previews')!;
 const button = document.querySelector<HTMLButtonElement>('#compile')!;
 const progress = document.querySelector<HTMLProgressElement>('#progress')!;
 const status = document.querySelector<HTMLParagraphElement>('#status')!;
-let objectUrl: string | null = null;
+let objectUrls: string[] = [];
 
 fileInput.addEventListener('change', () => {
-  const file = fileInput.files?.[0];
-  if (!file) return;
-  if (objectUrl) URL.revokeObjectURL(objectUrl);
-  objectUrl = URL.createObjectURL(file);
-  preview.src = objectUrl;
-  preview.hidden = false;
+  const files = [...(fileInput.files ?? [])];
+  if (!files.length) return;
+  objectUrls.forEach((u) => URL.revokeObjectURL(u));
+  objectUrls = files.map((f) => URL.createObjectURL(f));
+  previews.replaceChildren(
+    ...objectUrls.map((src, i) => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = `Target ${i}: ${files[i].name}`;
+      img.title = img.alt;
+      return img;
+    }),
+  );
   button.disabled = false;
-  status.textContent = '';
+  status.textContent = files.length > 1 ? `${files.length} pages, tracked as targets 0–${files.length - 1}` : '';
 });
 
 button.addEventListener('click', async () => {
-  if (!objectUrl) return;
+  if (!objectUrls.length) return;
   button.disabled = true;
   progress.hidden = false;
   status.textContent = 'Compiling… (this can take a minute)';
   try {
-    const bytes = await compileTargets([objectUrl], (p) => (progress.value = p));
+    const bytes = await compileTargets(objectUrls, (p) => (progress.value = p));
     const blob = new Blob([bytes as BlobPart], { type: 'application/octet-stream' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);

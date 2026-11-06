@@ -102,6 +102,7 @@ button:disabled { opacity: 0.45; cursor: default; }
   background: var(--glass);
 }
 .status--tracking { background: #1f7a45; }
+.status--floating { background: #5a4a14; }
 .status--error { background: var(--accent); }
 
 .icon-btn {
@@ -185,14 +186,58 @@ button:disabled { opacity: 0.45; cursor: default; }
   padding: 8px 12px;
   border-radius: 12px;
 }
-.controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-.controls button {
+.toolbar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 440px;
+}
+.toolbar button {
+  flex: none;
+  min-width: 40px;
+  min-height: 38px;
+  padding: 7px 11px;
   background: var(--glass);
   color: var(--glass-ink);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   font-size: 14px;
+  white-space: nowrap;
 }
+.toolbar button[aria-pressed='true'] { background: #f5f2ea; color: #111; }
+.toolbar button span { margin-right: 3px; }
+
+.banner {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 62px);
+  left: 16px;
+  right: 16px;
+  z-index: 10;
+  margin: 0 auto;
+  max-width: 420px;
+  font-size: 13px;
+  text-align: center;
+  background: var(--glass);
+  padding: 8px 12px;
+  border-radius: 12px;
+  line-height: 1.4;
+}
+
+/* 3D-anchored part labels (CSS2DRenderer) */
+.part-label {
+  pointer-events: auto;
+  padding: 4px 9px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #111;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #111;
+  border-radius: 999px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+.part-label.is-active { background: #111; color: #fff; }
 
 .info-card {
   width: 100%;

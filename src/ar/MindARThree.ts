@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { Controller, type MindARUpdate } from 'mind-ar/dist/mindar-image.prod.js';
 
 /**
@@ -33,6 +34,8 @@ export class MindARThree {
   readonly scene = new THREE.Scene();
   readonly camera = new THREE.PerspectiveCamera();
   readonly renderer: THREE.WebGLRenderer;
+  /** HTML overlay for labels attached to 3D objects (CSS2DObject). */
+  readonly labelRenderer = new CSS2DRenderer();
 
   private readonly container: HTMLElement;
   private readonly options: MindARThreeOptions;
@@ -58,7 +61,21 @@ export class MindARThree {
       zIndex: '1',
     });
     this.container.appendChild(this.renderer.domElement);
+    Object.assign(this.labelRenderer.domElement.style, {
+      position: 'absolute',
+      left: '0',
+      top: '0',
+      zIndex: '2',
+      pointerEvents: 'none',
+    });
+    this.container.appendChild(this.labelRenderer.domElement);
     window.addEventListener('resize', this.onResize);
+  }
+
+  /** Renders the 3D scene and the label overlay. */
+  render(): void {
+    this.renderer.render(this.scene, this.camera);
+    this.labelRenderer.render(this.scene, this.camera);
   }
 
   addAnchor(targetIndex: number): Anchor {
@@ -93,6 +110,7 @@ export class MindARThree {
     this.renderer.setAnimationLoop(null);
     this.renderer.dispose();
     this.renderer.domElement.remove();
+    this.labelRenderer.domElement.remove();
   }
 
   private async startVideo(): Promise<void> {
@@ -247,5 +265,6 @@ export class MindARThree {
     });
 
     renderer.setSize(cw, ch);
+    this.labelRenderer.setSize(cw, ch);
   }
 }
