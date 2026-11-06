@@ -54,6 +54,7 @@ export class MindARThree {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.localClippingEnabled = true; // CT cutaway
     Object.assign(this.renderer.domElement.style, {
       position: 'absolute',
       left: '0',

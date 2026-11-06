@@ -289,3 +289,54 @@ button:disabled { opacity: 0.45; cursor: default; }
 @media (prefers-reduced-motion: reduce) {
   .scan-frame, .info-card { animation: none; }
 }
+
+/* ---------- CT scan panel ---------- */
+.ct-panel {
+  position: absolute;
+  z-index: 11;
+  top: calc(env(safe-area-inset-top) + 62px);
+  right: 12px;
+  width: min(48vw, 260px);
+  padding: 8px;
+  border-radius: 14px;
+  background: rgba(8, 8, 10, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #eee;
+  animation: rise 0.2s ease-out;
+}
+.ct-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  background: #000;
+  touch-action: manipulation;
+  cursor: crosshair;
+}
+.ct-axes { display: flex; gap: 4px; }
+.ct-axes button {
+  flex: 1;
+  padding: 5px 0;
+  font-size: 11px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #ddd;
+}
+.ct-axes button.is-on { background: #f5f2ea; color: #111; font-weight: 700; }
+.ct-scrub { display: flex; align-items: center; gap: 6px; }
+.ct-play {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+.ct-scrub input[type='range'] { flex: 1; min-width: 0; accent-color: #f5f2ea; }
+/* The CT panel takes the top-right corner; hide the free-view banner under it. */
+.ar-root:has(.ct-panel) .banner { display: none; }

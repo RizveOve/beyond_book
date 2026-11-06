@@ -2,7 +2,9 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import type { CTConfig } from '../content/ctProfiles';
 import { partKeyFromMeshName, type PartInfo } from '../content/parts';
+import { CTScanner } from './CTScanner';
 
 type BeatRole = 'atrium' | 'ventricle';
 
@@ -32,6 +34,8 @@ export interface ModelOptions {
   explodeDistance?: number;
   /** Turn the model by this many radians when exploding (to show splits along the view axis). */
   explodeTurn?: number;
+  /** Enables the virtual CT scan view. */
+  ct?: CTConfig | null;
 }
 
 /**
@@ -48,6 +52,7 @@ export class ModelExperience {
   private readonly partsInfo: Record<string, PartInfo>;
   private readonly options: Required<ModelOptions>;
   private model: THREE.Object3D | null = null;
+  private scanner: CTScanner | null = null;
   private loading: Promise<void> | null = null;
   private size = 1;
   private readonly extent = new THREE.Vector3(1, 1, 1);
@@ -77,6 +82,7 @@ export class ModelExperience {
       surfaceParts: [],
       explodeDistance: 0.32,
       explodeTurn: 0,
+      ct: null,
       ...options,
     };
     this.beating = this.options.heartbeat;
@@ -145,6 +151,7 @@ export class ModelExperience {
 
     this.model = model;
     this.scaler.add(model);
+    if (this.options.ct) this.scanner = new CTScanner(this.scaler, model, this.options.ct.frame);
   }
 
   /**
@@ -241,6 +248,10 @@ export class ModelExperience {
     const z = this.scaler.scale.x + (this.zoomTarget - this.scaler.scale.x) * ease;
     this.scaler.scale.setScalar(z);
 
+    // CT slice follows the animated (beating / exploding) model.
+    const animating = this.beating || Math.abs(this.explodeTarget - this.explodeT) > 1e-3;
+    this.scanner?.update(dt, animating);
+
     // Gentle glow pulse on the selected part.
     if (this.selectedKey) {
       const glow = 0.18 + 0.12 * Math.sin(performance.now() / 180);
@@ -253,7 +264,10 @@ export class ModelExperience {
     if (!this.model) return null;
     this.raycaster.setFromCamera(ndc, camera);
     // When focusing a part, faded parts shouldn't block taps on the focused one.
-    const hits = this.raycaster.intersectObject(this.model, true);
+    // Ignore anything cut away by the CT plane (raycasts don't know about clipping).
+    const hits = this.raycaster
+      .intersectObject(this.model, true)
+      .filter((h) => !this.scanner || this.scanner.isVisible(h.point));
     const hit = this.selectedKey
       ? (hits.find((h) => partKeyFromMeshName(h.object.name) === this.selectedKey) ?? hits[0])
       : hits[0];
@@ -279,6 +293,19 @@ export class ModelExperience {
       part.label?.element.classList.toggle('is-active', part.key === this.selectedKey);
     }
     this.selectListener?.(this.selectedKey);
+  }
+
+  /** Virtual CT scanner (null if this model has no CT profile or isn't loaded yet). */
+  get ct(): CTScanner | null {
+    return this.scanner;
+  }
+
+  get ctConfig(): CTConfig | null {
+    return this.options.ct;
+  }
+
+  get selectedPart(): string | null {
+    return this.selectedKey;
   }
 
   get partInfo(): Record<string, PartInfo> {

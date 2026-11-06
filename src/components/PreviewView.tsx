@@ -17,6 +17,7 @@ export function PreviewView({ targetIndex, onExit }: { targetIndex: number; onEx
         surfaceParts: target.surfaceParts,
         explodeDistance: target.explodeDistance,
         explodeTurn: target.explodeTurn,
+        ct: target.ct,
       }),
   );
   const [loading, setLoading] = useState(true);
@@ -28,6 +29,7 @@ export function PreviewView({ targetIndex, onExit }: { targetIndex: number; onEx
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.localClippingEnabled = true; // CT cutaway
     container.appendChild(renderer.domElement);
 
     const labelRenderer = new CSS2DRenderer();

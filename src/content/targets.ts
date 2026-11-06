@@ -1,4 +1,5 @@
 import { BRAIN_PARTS } from './brainParts';
+import { BRAIN_CT, HEART_CT, type CTConfig } from './ctProfiles';
 import { HEART_PARTS } from './heartParts';
 import type { PartInfo } from './parts';
 
@@ -21,6 +22,8 @@ export interface ARTarget {
   explodeDistance: number;
   /** Turn the model (radians) when exploding, to reveal splits along the view axis. */
   explodeTurn: number;
+  /** Virtual CT scan settings. */
+  ct: CTConfig;
   /** Model size relative to the printed page width (page width == 1 unit). */
   size: number;
   /** Centre of the drawing on the page, in page-width units from the page centre. */
@@ -51,6 +54,7 @@ export const TARGETS: ARTarget[] = [
     surfaceParts: ['CoronaryArteries', 'CardiacVeins'],
     explodeDistance: 0.32,
     explodeTurn: 0,
+    ct: HEART_CT,
     size: 0.78,
     offset: { x: 0.02, y: 0.03 },
     lift: 0.18,
@@ -66,6 +70,7 @@ export const TARGETS: ARTarget[] = [
     surfaceParts: [],
     explodeDistance: 0.16,
     explodeTurn: -0.95, // brain splits left/right: swing round to a three-quarter view
+    ct: BRAIN_CT,
     size: 0.6,
     offset: { x: 0.03, y: -0.03 },
     lift: 0.12,

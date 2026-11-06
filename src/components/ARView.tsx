@@ -60,6 +60,7 @@ export function ARView({ onExit }: { onExit: () => void }) {
           surfaceParts: t.surfaceParts,
           explodeDistance: t.explodeDistance,
           explodeTurn: t.explodeTurn,
+          ct: t.ct,
         });
         experiences.set(index, exp);
       }

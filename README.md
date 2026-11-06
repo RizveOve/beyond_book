@@ -20,7 +20,8 @@ The dev server runs over **HTTPS** on your LAN. Phones only allow camera access 
    - **Tap** a part to read about it. The other parts fade out so the selected one stands out.
    - **Drag** sideways to turn the heart, or up and down to tilt it.
    - **Pinch** to zoom, or use the **− / +** buttons.
-   - The toolbar also has **Beat** (pause or play), the heart rate (resting, running or sleeping), **Labels**, **Explode** (pulls the parts apart), **Spin** (auto-rotate) and **Reset**.
+   - The toolbar also has **Beat** (pause or play), the heart rate (resting, running or sleeping), **Labels**, **Explode** (pulls the parts apart), **Spin** (auto-rotate), **CT scan** and **Reset**.
+   - **CT scan** cuts the 3D model open at a moving scan plane and shows a live CT-style image of that slice. You can switch between axial, coronal and sagittal planes, drag the slider or press ▶ to sweep through the model, and tap a structure in the CT image to identify it. The heart's slices move with the heartbeat.
 5. On the brain, **Explode** splits the hemispheres to reveal the corpus callosum and thalamus. The brain has no heartbeat controls.
 6. Move the camera off the page. The heart glides to the middle of the screen and stays fully interactive ("Free view"). Point at a page again and it snaps back onto it. If that's a different page in the target list, its own model loads.
 
@@ -32,6 +33,9 @@ The dev server runs over **HTTPS** on your LAN. Phones only allow camera access 
 src/
   ar/MindARThree.ts        Typed MindAR ↔ three.js bridge (camera feed, tracking, projection)
   three/ModelExperience.ts Model loading, heartbeat, tap-to-select/focus, labels, explode, rotate/zoom
+  three/CTScanner.ts       Slices the model with a plane (cross-section, 3D cutaway, slice outline)
+  three/ctImage.ts         Draws a CT-style image of a slice (with chest / head context, overlays)
+  content/ctProfiles.ts    CT grey levels per structure and each model's anatomical axes
   three/gestures.ts        Tap / drag / pinch pointer gestures
   content/heartParts.ts    Educational text per heart part (keyed by mesh name)
   content/brainParts.ts    Educational text per brain structure
@@ -85,6 +89,7 @@ The smoke test feeds Chrome a fake webcam that shows the heart page, an empty de
 ## Known limitations
 
 - The included heart and brain are greyscale models built in code, made for teaching rather than for clinical accuracy. Replace it with a scanned or artist-made model for production.
+- The CT view is a teaching simulation drawn from the 3D model's cross-sections, not real scan data. The chest and skull around the organ are drawn as simple shapes.
 - In free view the heart is fixed to the screen, not to the room: MindAR tracks images only and has no world tracking.
 - MindAR includes TensorFlow.js, so the first load is about 500 KB gzipped of JS plus the models (heart 1.3 MB, brain 1.9 MB, loaded in the background) and a 1.7 MB tracking file. Tracking needs good lighting and works best when the page fills most of the camera view.
 

@@ -227,6 +227,40 @@ try {
     await wait(800);
     await shot(page, `8-preview-${name}.png`);
     check(true, `${name} 3D preview rendered`);
+
+    // CT scan view
+    await page.locator('::-p-text(CT scan)').click();
+    await page.waitForSelector('.ct-image', { timeout: 10_000 });
+    await wait(1000);
+    await shot(page, `9-ct-${name}-axial.png`);
+    const dark = await page.$eval('.ct-image', (c) => {
+      const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data;
+      let bright = 0;
+      for (let i = 0; i < d.length; i += 16) if (d[i] > 90) bright++;
+      return bright / (d.length / 16);
+    });
+    check(dark > 0.05, `${name} CT image shows anatomy (${(dark * 100).toFixed(0)}% bright pixels)`);
+
+    // Tap structures in the CT image until one is identified.
+    const box = await (await page.$('.ct-image')).boundingBox();
+    let ctPart = null;
+    for (const [fx, fy] of [[0.5, 0.5], [0.55, 0.45], [0.45, 0.55], [0.6, 0.5], [0.4, 0.45], [0.5, 0.35]]) {
+      await page.mouse.click(box.x + box.width * fx, box.y + box.height * fy);
+      if (await page.waitForSelector('.info-card', { timeout: 600 }).catch(() => null)) {
+        ctPart = await page.$eval('.info-card h2', (el) => el.textContent);
+        break;
+      }
+    }
+    check(Boolean(ctPart), `${name} CT tap identifies a structure${ctPart ? ` (${ctPart})` : ''}`);
+    await shot(page, `9-ct-${name}-selected.png`);
+    if (ctPart) await page.locator('.info-card button[aria-label="Close"]').click();
+
+    await page.locator('::-p-text(Coronal)').click();
+    await wait(800);
+    await shot(page, `9-ct-${name}-coronal.png`);
+    await page.locator('::-p-text(Sagittal)').click();
+    await wait(800);
+    await shot(page, `9-ct-${name}-sagittal.png`);
   }
 } catch (e) {
   check(false, e.message);

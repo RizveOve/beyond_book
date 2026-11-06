@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { ModelExperience } from '../three/ModelExperience';
+import { CTPanel } from './CTPanel';
 
 interface Props {
   model: ModelExperience;
@@ -19,6 +20,7 @@ export function ModelHUD({ model: heart, selected, onClose }: Props) {
   const [labels, setLabels] = useState(heart.isLabelsOn);
   const [exploded, setExploded] = useState(heart.isExploded);
   const [spinning, setSpinning] = useState(heart.isAutoRotating);
+  const [ctOn, setCtOn] = useState(heart.ct?.isEnabled ?? false);
   const [presetIdx, setPresetIdx] = useState(() =>
     Math.max(0, BPM_PRESETS.findIndex((p) => p.bpm === heart.currentBpm)),
   );
@@ -41,7 +43,14 @@ export function ModelHUD({ model: heart, selected, onClose }: Props) {
     setSpinning(false);
   };
 
+  const toggleCT = () => {
+    heart.ct?.setEnabled(!ctOn);
+    setCtOn(!ctOn);
+  };
+
   return (
+    <>
+    {ctOn && heart.ct && <CTPanel model={heart} />}
     <div className="hud">
       {part ? (
         <section className="info-card" aria-live="polite">
@@ -99,10 +108,16 @@ export function ModelHUD({ model: heart, selected, onClose }: Props) {
         <button onClick={() => heart.zoomBy(1.35)} aria-label="Zoom in">
           +
         </button>
+        {heart.ct && (
+          <button onClick={toggleCT} aria-pressed={ctOn}>
+            <span aria-hidden>◎</span> CT scan
+          </button>
+        )}
         <button onClick={reset}>
           <span aria-hidden>↺</span> Reset
         </button>
       </div>
     </div>
+    </>
   );
 }
