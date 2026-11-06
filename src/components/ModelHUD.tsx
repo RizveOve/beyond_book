@@ -6,6 +6,8 @@ interface Props {
   model: ModelExperience;
   selected: string | null;
   onClose: () => void;
+  /** Shown with the colour key, e.g. what the colour families mean. */
+  colorNote?: string;
 }
 
 const BPM_PRESETS = [
@@ -15,12 +17,13 @@ const BPM_PRESETS = [
 ];
 
 /** Info card for the tapped part plus the model's tool bar. */
-export function ModelHUD({ model: heart, selected, onClose }: Props) {
+export function ModelHUD({ model: heart, selected, onClose, colorNote }: Props) {
   const [beating, setBeating] = useState(heart.isBeating);
   const [labels, setLabels] = useState(heart.isLabelsOn);
   const [exploded, setExploded] = useState(heart.isExploded);
   const [spinning, setSpinning] = useState(heart.isAutoRotating);
   const [ctOn, setCtOn] = useState(heart.ct?.isEnabled ?? false);
+  const [keyOpen, setKeyOpen] = useState(false);
   const [presetIdx, setPresetIdx] = useState(() =>
     Math.max(0, BPM_PRESETS.findIndex((p) => p.bpm === heart.currentBpm)),
   );
@@ -52,6 +55,24 @@ export function ModelHUD({ model: heart, selected, onClose }: Props) {
     <>
     {ctOn && heart.ct && <CTPanel model={heart} />}
     <div className="hud">
+      {keyOpen && heart.isColorCoded && (
+        <section className="color-key" aria-label="Colour key">
+          {colorNote && <p className="color-key__note">{colorNote}</p>}
+          <ul>
+            {heart.presentParts.map((p) => (
+              <li key={p.key}>
+                <button
+                  className={p.key === selected ? 'is-active' : ''}
+                  onClick={() => heart.select(p.key === selected ? null : p.key)}
+                >
+                  <span className="color-key__dot" style={{ background: p.color }} />
+                  {p.name}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {part ? (
         <section className="info-card" aria-live="polite">
           <div className="info-card__head">
@@ -67,7 +88,7 @@ export function ModelHUD({ model: heart, selected, onClose }: Props) {
           </p>
         </section>
       ) : (
-        <p className="hint">Tap a part to learn about it · drag to turn · pinch to zoom</p>
+        !keyOpen && <p className="hint">Tap a part to learn about it · drag to turn · pinch to zoom</p>
       )}
 
       <div className="toolbar" role="toolbar" aria-label="Model tools">
@@ -108,6 +129,11 @@ export function ModelHUD({ model: heart, selected, onClose }: Props) {
         <button onClick={() => heart.zoomBy(1.35)} aria-label="Zoom in">
           +
         </button>
+        {heart.isColorCoded && (
+          <button onClick={() => setKeyOpen((k) => !k)} aria-pressed={keyOpen}>
+            <span aria-hidden>●</span> Key
+          </button>
+        )}
         {heart.ct && (
           <button onClick={toggleCT} aria-pressed={ctOn}>
             <span aria-hidden>◎</span> CT scan

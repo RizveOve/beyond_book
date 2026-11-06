@@ -24,6 +24,12 @@ export interface ARTarget {
   explodeTurn: number;
   /** Virtual CT scan settings. */
   ct: CTConfig;
+  /** Colour-code the model's parts (colours come from `parts`). */
+  partColors: boolean;
+  /** Colour overrides by mesh-name pattern. */
+  meshColors?: [RegExp, string][];
+  /** One-line explanation shown with the colour key. */
+  colorNote?: string;
   /** Model size relative to the printed page width (page width == 1 unit). */
   size: number;
   /** Centre of the drawing on the page, in page-width units from the page centre. */
@@ -55,6 +61,9 @@ export const TARGETS: ARTarget[] = [
     explodeDistance: 0.32,
     explodeTurn: 0,
     ct: HEART_CT,
+    partColors: true,
+    meshColors: [[/_Fat\d*$/, '#f1e2b3']], // epicardial fat
+    colorNote: 'Reds & pinks carry oxygen-rich blood · blues & violet carry oxygen-poor blood',
     size: 0.78,
     offset: { x: 0.02, y: 0.03 },
     lift: 0.18,
@@ -71,6 +80,7 @@ export const TARGETS: ARTarget[] = [
     explodeDistance: 0.16,
     explodeTurn: -0.95, // brain splits left/right: swing round to a three-quarter view
     ct: BRAIN_CT,
+    partColors: false,
     size: 0.6,
     offset: { x: 0.03, y: -0.03 },
     lift: 0.12,

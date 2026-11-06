@@ -2,7 +2,7 @@
 export interface PartInfo {
   key: string;
   name: string;
-  /** Grey shade matching the part's material on the (greyscale) model. */
+  /** The part's colour: used on the model (if the target is coloured), labels, key and info card. */
   color: string;
   summary: string;
   fact: string;

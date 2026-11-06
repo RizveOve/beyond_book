@@ -61,6 +61,8 @@ export function ARView({ onExit }: { onExit: () => void }) {
           explodeDistance: t.explodeDistance,
           explodeTurn: t.explodeTurn,
           ct: t.ct,
+          partColors: t.partColors,
+          meshColors: t.meshColors,
         });
         experiences.set(index, exp);
       }
@@ -247,6 +249,7 @@ export function ARView({ onExit }: { onExit: () => void }) {
           key={active.index}
           model={active.heart}
           selected={selected}
+          colorNote={TARGETS[active.index].colorNote}
           onClose={() => active.heart.select(null)}
         />
       )}

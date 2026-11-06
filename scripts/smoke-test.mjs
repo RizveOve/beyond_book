@@ -223,10 +223,24 @@ try {
     await page.waitForSelector('.chapter-card');
     const buttons = await page.$$('.chapter-card button');
     await buttons[i].click();
-    await page.waitForSelector('.hint', { timeout: 60_000 });
+    await page.waitForSelector('.toolbar', { timeout: 60_000 });
     await wait(800);
     await shot(page, `8-preview-${name}.png`);
     check(true, `${name} 3D preview rendered`);
+
+    // Colour key (heart only): tap a colour chip to select that part.
+    const hasKey = (await page.$$eval('.toolbar button', (bs) => bs.filter((b) => /Key/.test(b.textContent)).length)) > 0;
+    check(hasKey === (name === 'heart'), `${name} colour key ${hasKey ? 'available' : 'not shown'}`);
+    if (hasKey) {
+      await page.locator('.toolbar ::-p-text(Key)').click();
+      await page.locator('.color-key ::-p-text(Aorta)').click();
+      const title = await page.waitForSelector('.info-card h2').then((h) => h.evaluate((el) => el.textContent));
+      check(title === 'Aorta', `Colour key selects a part (${title})`);
+      await wait(500);
+      await shot(page, '8-preview-heart-key.png');
+      await page.locator('.info-card button[aria-label="Close"]').click();
+      await page.locator('.toolbar ::-p-text(Key)').click();
+    }
 
     // CT scan view
     await page.locator('::-p-text(CT scan)').click();

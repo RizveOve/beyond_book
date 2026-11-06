@@ -18,6 +18,8 @@ export function PreviewView({ targetIndex, onExit }: { targetIndex: number; onEx
         explodeDistance: target.explodeDistance,
         explodeTurn: target.explodeTurn,
         ct: target.ct,
+        partColors: target.partColors,
+        meshColors: target.meshColors,
       }),
   );
   const [loading, setLoading] = useState(true);
@@ -43,7 +45,11 @@ export function PreviewView({ targetIndex, onExit }: { targetIndex: number; onEx
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#16171a');
     addLights(scene);
-    scene.add(model.root);
+    // Sit the model a little above centre so the controls at the bottom don't cover it.
+    const holder = new THREE.Group();
+    holder.position.y = 0.16;
+    holder.add(model.root);
+    scene.add(holder);
 
     const camera = new THREE.PerspectiveCamera(40, 1, 0.01, 50);
     camera.position.set(0, 0.05, 2.6);
@@ -87,7 +93,7 @@ export function PreviewView({ targetIndex, onExit }: { targetIndex: number; onEx
       cancelled = true;
       detach();
       window.removeEventListener('resize', resize);
-      scene.remove(model.root);
+      holder.remove(model.root);
       renderer.setAnimationLoop(null);
       renderer.dispose();
       renderer.domElement.remove();
@@ -113,7 +119,12 @@ export function PreviewView({ targetIndex, onExit }: { targetIndex: number; onEx
           <p>Loading {target.title.toLowerCase()}…</p>
         </div>
       ) : (
-        <ModelHUD model={model} selected={selected} onClose={() => model.select(null)} />
+        <ModelHUD
+          model={model}
+          selected={selected}
+          colorNote={target.colorNote}
+          onClose={() => model.select(null)}
+        />
       )}
     </div>
   );

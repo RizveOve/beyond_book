@@ -36,6 +36,10 @@ export interface ModelOptions {
   explodeTurn?: number;
   /** Enables the virtual CT scan view. */
   ct?: CTConfig | null;
+  /** Paint each part in its `PartInfo.color` instead of the model's own materials. */
+  partColors?: boolean;
+  /** Colour overrides by mesh-name pattern (checked first), e.g. fat deposits. */
+  meshColors?: [RegExp, string][];
 }
 
 /**
@@ -83,6 +87,8 @@ export class ModelExperience {
       explodeDistance: 0.32,
       explodeTurn: 0,
       ct: null,
+      partColors: false,
+      meshColors: [],
       ...options,
     };
     this.beating = this.options.heartbeat;
@@ -125,6 +131,13 @@ export class ModelExperience {
         m.clone(),
       );
       obj.material = Array.isArray(obj.material) ? mats : mats[0];
+
+      // Colour-code parts so each component is easy to tell apart.
+      if (this.options.partColors) {
+        const color =
+          this.options.meshColors.find(([re]) => re.test(obj.name))?.[1] ?? this.partsInfo[key]?.color;
+        if (color) for (const m of mats) if ('color' in m) (m.color as THREE.Color).set(color);
+      }
 
       const part = this.parts.get(key) ?? { key, meshes: [], materials: [], label: null };
       part.meshes.push(obj);
@@ -204,7 +217,13 @@ export class ModelExperience {
 
       const el = document.createElement('button');
       el.className = 'part-label';
-      el.textContent = info.name;
+      if (this.options.partColors) {
+        const dot = document.createElement('span');
+        dot.className = 'part-label__dot';
+        dot.style.background = info.color;
+        el.append(dot);
+      }
+      el.append(info.name);
       el.addEventListener('pointerdown', (e) => e.stopPropagation());
       el.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -302,6 +321,16 @@ export class ModelExperience {
 
   get ctConfig(): CTConfig | null {
     return this.options.ct;
+  }
+
+  /** Whether parts are colour-coded (shows the colour key). */
+  get isColorCoded(): boolean {
+    return this.options.partColors;
+  }
+
+  /** Known, tappable parts present in the loaded model (for the colour key). */
+  get presentParts(): PartInfo[] {
+    return [...this.parts.keys()].flatMap((k) => (this.partsInfo[k] ? [this.partsInfo[k]] : []));
   }
 
   get selectedPart(): string | null {
