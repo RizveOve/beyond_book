@@ -1,12 +1,13 @@
 // End-to-end smoke test without a phone:
-//  1. Renders fake "camera frames": the printed page on a desk, and the empty desk
-//  2. Encodes a looping .y4m video (page → desk → page …) used as Chrome's fake webcam
+//  1. Renders fake "camera frames": each printed page on a desk, and the empty desk
+//  2. Encodes a looping .y4m video (heart page → desk → brain page → desk …)
+//     used as Chrome's fake webcam
 //  3. Opens the app, starts AR and checks that:
-//       - MindAR locks on to the page
-//       - when the page leaves view, the heart stays on screen ("Free view")
+//       - MindAR locks on to the heart page and shows the heart
+//       - when the page leaves view, the model stays on screen ("Free view")
 //       - tapping selects a part; labels & explode work
-//       - the heart re-anchors when the page comes back
-//  4. Checks the camera-free 3D preview
+//       - the brain page swaps in the brain model (and has no heartbeat controls)
+//  4. Checks the camera-free 3D previews
 //  Screenshots are saved to ./smoke-output/
 //
 //   node scripts/smoke-test.mjs
@@ -22,13 +23,14 @@ await mkdir(outDir, { recursive: true });
 
 const W = 960;
 const H = 540;
-const FPS = 10;
+const FPS = 5;
 const PAGE_SECONDS = 5;
 const EMPTY_SECONDS = 10;
 
 // ---------- 1. Fake camera frames ----------
-async function renderFrame(browser, withPage) {
-  const png = await readFile(resolve(root, 'public/targets/heart-page.png'));
+async function renderFrame(browser, pageFile) {
+  const withPage = Boolean(pageFile);
+  const png = withPage ? await readFile(resolve(root, 'public/targets', pageFile)) : Buffer.alloc(0);
   const page = await browser.newPage();
   const rgba = await page.evaluate(
     async (dataUrl, W, H, withPage) => {
@@ -105,12 +107,15 @@ function y4m(segments) {
 
 // ---------- 2. Build fake webcam video ----------
 const helper = await puppeteer.launch({ executablePath: chromePath(), headless: true });
-const pageFrame = toI420(await renderFrame(helper, true));
-const deskFrame = toI420(await renderFrame(helper, false));
+const heartFrame = toI420(await renderFrame(helper, 'heart-page.png'));
+const brainFrame = toI420(await renderFrame(helper, 'brain-page.png'));
+const deskFrame = toI420(await renderFrame(helper, null));
 await helper.close();
 const y4mPath = resolve(outDir, 'fake-camera.y4m');
-await writeFile(y4mPath, y4m([[pageFrame, PAGE_SECONDS * FPS], [deskFrame, EMPTY_SECONDS * FPS]]));
-console.log(`Fake camera: ${PAGE_SECONDS}s page → ${EMPTY_SECONDS}s empty desk, looping`);
+const P = PAGE_SECONDS * FPS;
+const E = EMPTY_SECONDS * FPS;
+await writeFile(y4mPath, y4m([[heartFrame, P], [deskFrame, E], [brainFrame, P], [deskFrame, E]]));
+console.log(`Fake camera: heart ${PAGE_SECONDS}s → desk ${EMPTY_SECONDS}s → brain ${PAGE_SECONDS}s → desk ${EMPTY_SECONDS}s, looping`);
 
 // ---------- 3. Run the app ----------
 process.env.NO_SSL = '1'; // localhost is a secure context, no TLS needed
@@ -161,43 +166,68 @@ try {
   await shot(page, '1-home.png');
 
   await page.locator('button.primary').click();
-  await page.waitForSelector('.status--tracking', { timeout: 180_000 });
-  await wait(1200);
-  await shot(page, '2-on-page.png');
-  check(true, 'MindAR locked on to the page');
+  const chapter = () => page.$eval('.chapter', (el) => el.textContent).catch(() => '');
+  const onPage = (title) =>
+    page.waitForFunction(
+      (t) => document.querySelector('.status--tracking') && document.querySelector('.chapter')?.textContent === t,
+      { timeout: 120_000 },
+      title,
+    );
 
-  // The page leaves the camera view → heart must stay on screen.
+  // ----- Heart -----
+  await onPage('The Human Heart');
+  await wait(1200);
+  await shot(page, '2-heart-on-page.png');
+  check(true, 'Heart page recognised → heart shown');
+
+  // The page leaves the camera view → the model must stay on screen.
   await page.waitForSelector('.status--floating', { timeout: 60_000 });
   await wait(1200); // let it glide into place
-  await shot(page, '3-free-view.png');
+  await shot(page, '3-heart-free-view.png');
   check(true, 'Page lost → heart kept on screen in free view');
 
-  const part = await tapUntilSelected(page);
-  check(Boolean(part), `Tap selects a part in free view${part ? ` (${part})` : ''}`);
-  await shot(page, '4-selected.png');
-
+  let part = await tapUntilSelected(page);
+  check(Boolean(part), `Tap selects a heart part${part ? ` (${part})` : ''}`);
   await page.locator('.info-card button[aria-label="Close"]').click();
   await page.locator('::-p-text(Labels)').click();
   await page.locator('::-p-text(Explode)').click();
   await wait(1200);
   const labelCount = await page.$$eval('.part-label', (els) => els.filter((e) => e.style.display !== 'none').length);
   check(labelCount > 5, `Labels shown (${labelCount})`);
-  await shot(page, '5-labels-exploded.png');
+  await shot(page, '4-heart-labels-exploded.png');
   await page.locator('::-p-text(Reset)').click();
+  await page.locator('::-p-text(Labels)').click();
 
-  // Page comes back → re-anchors onto it.
-  await page.waitForSelector('.status--tracking', { timeout: 60_000 });
+  // ----- Brain: a different page swaps in its own model -----
+  await onPage('The Human Brain');
+  await wait(1500);
+  await shot(page, '5-brain-on-page.png');
+  check(true, `Brain page recognised → model switched (${await chapter()})`);
+  const beatButtons = await page.$$eval('.toolbar button', (bs) => bs.filter((b) => /Beat/.test(b.textContent)).length);
+  check(beatButtons === 0, 'Brain has no heartbeat controls');
+
+  await page.waitForSelector('.status--floating', { timeout: 60_000 });
   await wait(1200);
-  await shot(page, '6-re-anchored.png');
-  check(true, 'Page found again → heart re-anchored');
+  part = await tapUntilSelected(page);
+  check(Boolean(part), `Tap selects a brain part${part ? ` (${part})` : ''}`);
+  await wait(400);
+  await shot(page, '6-brain-selected.png');
+  await page.locator('.info-card button[aria-label="Close"]').click();
+  await page.locator('::-p-text(Explode)').click();
+  await wait(1200);
+  await shot(page, '7-brain-exploded.png');
 
-  // 3D preview (no camera)
-  await page.locator('button[aria-label="Back"]').click();
-  await page.locator('button.secondary').click();
-  await page.waitForSelector('.hint', { timeout: 60_000 });
-  await wait(800);
-  await shot(page, '7-preview.png');
-  check(true, '3D preview rendered');
+  // ----- 3D previews (no camera) -----
+  for (const [i, name] of [[0, 'heart'], [1, 'brain']]) {
+    await page.locator('button[aria-label="Back"]').click();
+    await page.waitForSelector('.chapter-card');
+    const buttons = await page.$$('.chapter-card button');
+    await buttons[i].click();
+    await page.waitForSelector('.hint', { timeout: 60_000 });
+    await wait(800);
+    await shot(page, `8-preview-${name}.png`);
+    check(true, `${name} 3D preview rendered`);
+  }
 } catch (e) {
   check(false, e.message);
 } finally {

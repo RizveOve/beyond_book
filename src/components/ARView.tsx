@@ -2,9 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { MindARThree, type Anchor } from '../ar/MindARThree';
 import { TARGETS, TARGETS_MIND_URL } from '../content/targets';
-import { HeartExperience, addLights, createContactShadow } from '../three/HeartExperience';
+import { ModelExperience, addLights, createContactShadow } from '../three/ModelExperience';
 import { attachGestures } from '../three/gestures';
-import { HeartHUD } from './HeartHUD';
+import { ModelHUD } from './ModelHUD';
 
 /**
  * - `scanning`: no page seen yet.
@@ -17,8 +17,8 @@ type Status = 'starting' | 'scanning' | 'tracking' | 'floating' | 'error';
 export function ARView({ onExit }: { onExit: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   // One experience per target page, created lazily the first time it's seen.
-  const [experiences] = useState(() => new Map<number, HeartExperience>());
-  const [active, setActive] = useState<{ index: number; heart: HeartExperience } | null>(null);
+  const [experiences] = useState(() => new Map<number, ModelExperience>());
+  const [active, setActive] = useState<{ index: number; heart: ModelExperience } | null>(null);
   const [status, setStatus] = useState<Status>('starting');
   const [error, setError] = useState('');
   const [selected, setSelected] = useState<string | null>(null);
@@ -44,7 +44,7 @@ export function ARView({ onExit }: { onExit: () => void }) {
     stage.visible = false;
     scene.add(stage);
 
-    let current: { index: number; heart: HeartExperience } | null = null;
+    let current: { index: number; heart: ModelExperience } | null = null;
     let anchoredTo: Anchor | null = null;
     let switching = 0; // bumps on every target switch to drop stale async loads
     let gliding = true; // right after a mode change: glide instead of tight follow
@@ -54,7 +54,13 @@ export function ARView({ onExit }: { onExit: () => void }) {
     const getExperience = (index: number) => {
       let exp = experiences.get(index);
       if (!exp) {
-        exp = new HeartExperience(TARGETS[index].parts);
+        const t = TARGETS[index];
+        exp = new ModelExperience(t.parts, {
+          heartbeat: t.heartbeat,
+          surfaceParts: t.surfaceParts,
+          explodeDistance: t.explodeDistance,
+          explodeTurn: t.explodeTurn,
+        });
         experiences.set(index, exp);
       }
       return exp;
@@ -74,13 +80,12 @@ export function ARView({ onExit }: { onExit: () => void }) {
     };
 
     /** Floating pose: centred in view, facing the camera, sized to fit the screen. */
-    const floatingPose = (index: number) => {
-      // Model's largest side == size; ~0.8 of its half-size fills a portrait screen well.
-      const radius = (TARGETS[index].size / 2) * floatScale * 0.8;
-      const halfV = THREE.MathUtils.degToRad(camera.fov / 2);
-      const halfH = Math.atan(Math.tan(halfV) * camera.aspect);
-      const dist = radius / Math.tan(Math.min(halfV, halfH));
-      tPos.set(0, radius * 0.18, -dist);
+    const floatingPose = (exp: ModelExperience) => {
+      const dims = exp.dimensions.multiplyScalar(floatScale * 1.15); // 15% margin
+      const tanV = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+      const tanH = tanV * camera.aspect;
+      const dist = Math.max(dims.y / 2 / tanV, dims.x / 2 / tanH) + dims.z / 2;
+      tPos.set(0, dims.y * 0.06, -dist);
       tQuat.identity();
       tScale.setScalar(floatScale);
     };
@@ -149,7 +154,7 @@ export function ARView({ onExit }: { onExit: () => void }) {
       const dt = Math.min(clock.getDelta(), 0.1);
       if (current && stage.visible) {
         if (anchoredTo) anchorPose(anchoredTo, current.index);
-        else floatingPose(current.index);
+        else floatingPose(current.heart);
 
         // Glide for ~0.6s after a mode change, then follow the page tightly.
         if (gliding && (glideTime += dt) > 0.6) gliding = false;
@@ -165,11 +170,10 @@ export function ARView({ onExit }: { onExit: () => void }) {
 
     (async () => {
       try {
-        // Warm up the first model while the camera starts.
-        await Promise.all([
-          getExperience(0).load(TARGETS[0].modelUrl, TARGETS[0].size),
-          mindar.start(),
-        ]);
+        // Preload every model in the background (finding a page awaits its own
+        // model), so the camera starts without waiting for all downloads.
+        TARGETS.forEach((t, i) => getExperience(i).load(t.modelUrl, t.size).catch(console.error));
+        await mindar.start();
         if (cancelled) return;
         setStatus((s) => (s === 'starting' ? 'scanning' : s));
         renderer.setAnimationLoop(tick);
@@ -203,27 +207,30 @@ export function ARView({ onExit }: { onExit: () => void }) {
         <button className="icon-btn" onClick={onExit} aria-label="Back">
           ←
         </button>
-        <span className="brand">BeyondBook</span>
+        <span className="brand">
+          BeyondBook
+          {active && <small className="chapter">{TARGETS[active.index].title}</small>}
+        </span>
         <span className={`status status--${status}`}>{statusLabel(status)}</span>
       </header>
 
       {status === 'starting' && (
         <div className="overlay">
           <div className="spinner" />
-          <p>Starting camera & loading the heart…</p>
+          <p>Starting camera & loading models…</p>
         </div>
       )}
 
       {status === 'scanning' && (
         <div className="overlay overlay--scan">
           <div className="scan-frame" />
-          <p>Point your camera at the heart illustration on the page</p>
+          <p>Point your camera at a BeyondBook page (heart or brain)</p>
         </div>
       )}
 
       {status === 'floating' && (
         <p className="banner">
-          Page out of view: the heart stays with you. Point at a page to place it back.
+          Page out of view: the model stays with you. Point at a page to place it back.
         </p>
       )}
 
@@ -235,9 +242,9 @@ export function ARView({ onExit }: { onExit: () => void }) {
       )}
 
       {showHud && (
-        <HeartHUD
+        <ModelHUD
           key={active.index}
-          heart={active.heart}
+          model={active.heart}
           selected={selected}
           onClose={() => active.heart.select(null)}
         />

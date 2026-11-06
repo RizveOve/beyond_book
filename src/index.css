@@ -59,10 +59,38 @@ button:disabled { opacity: 0.45; cursor: default; }
 .steps { margin: 0 0 22px; padding-left: 20px; line-height: 1.55; }
 .steps li { margin-bottom: 6px; }
 .steps a { color: var(--blue); font-weight: 600; }
-.home .primary,
-.home .secondary { display: block; width: 100%; padding: 15px; font-weight: 700; font-size: 17px; }
-.home .primary { background: var(--accent); color: var(--accent-ink); margin-bottom: 10px; }
-.home .secondary { background: transparent; color: var(--ink); border: 2px solid var(--ink); }
+.home .primary { display: block; width: 100%; padding: 15px; font-weight: 700; font-size: 17px; background: var(--accent); color: var(--accent-ink); }
+
+.chapters__title { margin: 26px 0 10px; font-family: Georgia, serif; font-size: 20px; }
+.chapters { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.chapter-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+}
+.chapter-card img {
+  width: 58px;
+  aspect-ratio: 1240 / 1754;
+  object-fit: cover;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  flex: none;
+  background: #fff;
+}
+.chapter-card__body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.chapter-card__kicker { font-size: 12px; color: var(--muted); }
+.chapter-card__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; align-items: center; }
+.chapter-card__actions a { color: var(--blue); font-weight: 600; font-size: 14px; }
+.chapter-card__actions button {
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--ink);
+  color: #fff;
+}
 
 /* ---------- AR / Preview ---------- */
 .ar-root {
@@ -94,7 +122,8 @@ button:disabled { opacity: 0.45; cursor: default; }
   pointer-events: none;
 }
 .topbar > * { pointer-events: auto; }
-.brand { font-family: Georgia, serif; font-weight: 700; font-size: 18px; flex: 1; }
+.brand { font-family: Georgia, serif; font-weight: 700; font-size: 18px; flex: 1; min-width: 0; line-height: 1.1; }
+.brand .chapter { display: block; font-family: system-ui, sans-serif; font-weight: 500; font-size: 12px; opacity: 0.85; }
 .status {
   font-size: 12px;
   padding: 5px 10px;

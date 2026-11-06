@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import type { HeartExperience } from '../three/HeartExperience';
+import type { ModelExperience } from '../three/ModelExperience';
 
 interface Props {
-  heart: HeartExperience;
+  model: ModelExperience;
   selected: string | null;
   onClose: () => void;
 }
@@ -14,7 +14,7 @@ const BPM_PRESETS = [
 ];
 
 /** Info card for the tapped part plus the model's tool bar. */
-export function HeartHUD({ heart, selected, onClose }: Props) {
+export function ModelHUD({ model: heart, selected, onClose }: Props) {
   const [beating, setBeating] = useState(heart.isBeating);
   const [labels, setLabels] = useState(heart.isLabelsOn);
   const [exploded, setExploded] = useState(heart.isExploded);
@@ -62,15 +62,19 @@ export function HeartHUD({ heart, selected, onClose }: Props) {
       )}
 
       <div className="toolbar" role="toolbar" aria-label="Model tools">
-        <button
-          onClick={() => toggle(beating, (v) => heart.setBeating(v), setBeating)}
-          aria-pressed={beating}
-        >
-          <span aria-hidden>{beating ? '❚❚' : '▶'}</span> Beat
-        </button>
-        <button onClick={cycleBpm} disabled={!beating} title="Change heart rate">
-          <span aria-hidden>♥</span> {BPM_PRESETS[presetIdx].label}
-        </button>
+        {heart.hasHeartbeat && (
+          <>
+            <button
+              onClick={() => toggle(beating, (v) => heart.setBeating(v), setBeating)}
+              aria-pressed={beating}
+            >
+              <span aria-hidden>{beating ? '❚❚' : '▶'}</span> Beat
+            </button>
+            <button onClick={cycleBpm} disabled={!beating} title="Change heart rate">
+              <span aria-hidden>♥</span> {BPM_PRESETS[presetIdx].label}
+            </button>
+          </>
+        )}
         <button
           onClick={() => toggle(labels, (v) => heart.setLabels(v), setLabels)}
           aria-pressed={labels}

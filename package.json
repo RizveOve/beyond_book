@@ -8,10 +8,10 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "assets": "npm run assets:page && npm run assets:target && npm run assets:model",
-    "assets:page": "node scripts/render-target.mjs",
+    "assets": "npm run assets:page && npm run assets:model && npm run assets:target",
+    "assets:page": "node scripts/build-brain-page.mjs && node scripts/render-target.mjs",
     "assets:target": "node scripts/compile-target.mjs",
-    "assets:model": "node scripts/build-heart-glb.mjs && node scripts/compress-glb.mjs"
+    "assets:model": "node scripts/build-heart-glb.mjs && node scripts/build-brain-glb.mjs && node scripts/compress-glb.mjs public/models/heart.glb && node scripts/compress-glb.mjs public/models/brain.glb"
   },
   "dependencies": {
     "mind-ar": "^1.2.5",

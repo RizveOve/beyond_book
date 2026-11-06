@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { partKeyFromMeshName, type HeartPart } from '../content/heartParts';
+import { partKeyFromMeshName, type PartInfo } from '../content/parts';
 
 type BeatRole = 'atrium' | 'ventricle';
 
@@ -22,8 +22,17 @@ interface MeshState {
 
 const ZOOM_MIN = 0.35;
 const ZOOM_MAX = 5;
-/** Parts that sit on the heart's surface "peel" straight forward when exploded. */
-const SURFACE_PARTS = new Set(['CoronaryArteries', 'CardiacVeins']);
+
+export interface ModelOptions {
+  /** Animate a "lub-dub" heartbeat on meshes named *Atrium / *Ventricle. */
+  heartbeat?: boolean;
+  /** Parts lying on the model's surface; in explode view they peel straight forward. */
+  surfaceParts?: string[];
+  /** How far parts move apart in explode view, as a fraction of the model size. */
+  explodeDistance?: number;
+  /** Turn the model by this many radians when exploding (to show splits along the view axis). */
+  explodeTurn?: number;
+}
 
 /**
  * Everything about the 3D model that is shared between AR mode and 3D preview:
@@ -32,14 +41,16 @@ const SURFACE_PARTS = new Set(['CoronaryArteries', 'CardiacVeins']);
  *
  * Scene graph:  root (placed by caller) → spinner (user rotation) → scaler (zoom) → model
  */
-export class HeartExperience {
+export class ModelExperience {
   readonly root = new THREE.Group();
   private readonly spinner = new THREE.Group();
   private readonly scaler = new THREE.Group();
-  private readonly partsInfo: Record<string, HeartPart>;
+  private readonly partsInfo: Record<string, PartInfo>;
+  private readonly options: Required<ModelOptions>;
   private model: THREE.Object3D | null = null;
   private loading: Promise<void> | null = null;
   private size = 1;
+  private readonly extent = new THREE.Vector3(1, 1, 1);
 
   private readonly parts = new Map<string, PartState>();
   private readonly meshStates: MeshState[] = [];
@@ -59,8 +70,16 @@ export class HeartExperience {
   private spinTarget = 0;
   private tiltTarget = 0;
 
-  constructor(partsInfo: Record<string, HeartPart>) {
+  constructor(partsInfo: Record<string, PartInfo>, options: ModelOptions = {}) {
     this.partsInfo = partsInfo;
+    this.options = {
+      heartbeat: false,
+      surfaceParts: [],
+      explodeDistance: 0.32,
+      explodeTurn: 0,
+      ...options,
+    };
+    this.beating = this.options.heartbeat;
     this.root.name = 'HeartRoot';
     this.root.add(this.spinner);
     this.spinner.add(this.scaler);
@@ -85,6 +104,7 @@ export class HeartExperience {
     const box = new THREE.Box3().setFromObject(model);
     const dims = box.getSize(new THREE.Vector3());
     const scale = size / Math.max(dims.x, dims.y, dims.z);
+    this.extent.copy(dims).multiplyScalar(scale);
     const center = box.getCenter(new THREE.Vector3());
     model.position.copy(center).multiplyScalar(-scale);
     model.scale.setScalar(scale);
@@ -107,6 +127,7 @@ export class HeartExperience {
 
       // Chambers contract; vessels stay put (their geometry isn't centred on
       // the mesh origin, so scaling them would look wrong).
+      if (!this.options.heartbeat) return;
       if (key === 'LeftVentricle' || key === 'RightVentricle') {
         this.beatTargets.push({ obj, base: obj.scale.clone(), role: 'ventricle' });
       } else if (key === 'LeftAtrium' || key === 'RightAtrium') {
@@ -117,8 +138,8 @@ export class HeartExperience {
     this.setupExplode();
     this.setupLabels();
 
-    // Unknown model (no named chambers): pulse the whole thing.
-    if (this.beatTargets.length === 0) {
+    // Heart model without named chambers: pulse the whole thing.
+    if (this.options.heartbeat && this.beatTargets.length === 0) {
       this.beatTargets.push({ obj: model, base: model.scale.clone(), role: 'ventricle' });
     }
 
@@ -126,16 +147,21 @@ export class HeartExperience {
     this.scaler.add(model);
   }
 
-  /** Each part moves away from the model centre (world-space directions, stored per parent). */
+  /**
+   * Each part moves away from the model centre. Meshes named `*_LH` / `*_RH`
+   * (left/right hemisphere) instead move together sideways, so each half stays
+   * whole and the model splits open down the middle.
+   */
   private setupExplode(): void {
-    const dist = this.size * 0.32;
+    const dist = this.size * this.options.explodeDistance;
+    const surface = new Set(this.options.surfaceParts);
     for (const part of this.parts.values()) {
       const box = new THREE.Box3();
       part.meshes.forEach((m) => box.expandByObject(m));
       const c = box.getCenter(new THREE.Vector3());
 
       let dir: THREE.Vector3;
-      if (SURFACE_PARTS.has(part.key)) {
+      if (surface.has(part.key)) {
         dir = new THREE.Vector3(0, 0, 1).multiplyScalar(dist * 1.4);
       } else {
         dir = c.lengthSq() < 1e-6 ? new THREE.Vector3(0, -1, 0) : c.clone().normalize();
@@ -144,8 +170,10 @@ export class HeartExperience {
 
       for (const mesh of part.meshes) {
         const parent = mesh.parent!;
+        const side = /_LH$/.test(mesh.name) ? 1 : /_RH$/.test(mesh.name) ? -1 : 0;
+        const meshDir = side ? new THREE.Vector3(0, 0, side * dist * 1.6) : dir;
         const a = parent.worldToLocal(c.clone());
-        const b = parent.worldToLocal(c.clone().add(dir));
+        const b = parent.worldToLocal(c.clone().add(meshDir));
         this.meshStates.push({
           mesh,
           basePos: mesh.position.clone(),
@@ -253,8 +281,18 @@ export class HeartExperience {
     this.selectListener?.(this.selectedKey);
   }
 
-  get partInfo(): Record<string, HeartPart> {
+  get partInfo(): Record<string, PartInfo> {
     return this.partsInfo;
+  }
+
+  /** Model width/height/depth in scene units at zoom 1 (after normalising to `size`). */
+  get dimensions(): THREE.Vector3 {
+    return this.extent.clone();
+  }
+
+  /** Whether this model has a heartbeat animation at all. */
+  get hasHeartbeat(): boolean {
+    return this.options.heartbeat;
   }
 
   get isBeating(): boolean {
@@ -290,6 +328,7 @@ export class HeartExperience {
     return this.explodeTarget > 0.5;
   }
   setExploded(on: boolean): void {
+    if (on !== this.isExploded) this.spinTarget += (on ? 1 : -1) * this.options.explodeTurn;
     this.explodeTarget = on ? 1 : 0;
   }
 
@@ -319,7 +358,7 @@ export class HeartExperience {
     this.tiltTarget = 0;
     this.spinner.rotation.y -= turns * Math.PI * 2;
     this.zoomTarget = 1;
-    this.setExploded(false);
+    this.explodeTarget = 0;
     this.setAutoRotate(false);
     this.select(null);
   }

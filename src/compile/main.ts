@@ -23,11 +23,11 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 // Used by scripts/compile-target.mjs (headless Chrome) — returns base64.
 declare global {
   interface Window {
-    __compileTarget?: (url: string) => Promise<string>;
+    __compileTarget?: (urls: string[]) => Promise<string>;
   }
 }
-window.__compileTarget = async (url) => {
-  const bytes = await compileTargets([url]);
+window.__compileTarget = async (urls) => {
+  const bytes = await compileTargets(urls);
   let bin = '';
   for (let i = 0; i < bytes.length; i += 0x8000) {
     bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
@@ -71,9 +71,9 @@ button.addEventListener('click', async () => {
     const blob = new Blob([bytes as BlobPart], { type: 'application/octet-stream' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'heart.mind';
+    a.download = 'pages.mind';
     a.click();
-    status.textContent = `Done — ${(bytes.length / 1024).toFixed(0)} KB downloaded as heart.mind`;
+    status.textContent = `Done — ${(bytes.length / 1024).toFixed(0)} KB downloaded as pages.mind`;
   } catch (e) {
     status.textContent = `Failed: ${e instanceof Error ? e.message : String(e)}`;
   } finally {

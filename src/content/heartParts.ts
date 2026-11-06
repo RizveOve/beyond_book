@@ -1,11 +1,4 @@
-export interface HeartPart {
-  key: string;
-  name: string;
-  /** Grey shade matching the part's material on the (greyscale) model. */
-  color: string;
-  summary: string;
-  fact: string;
-}
+import type { PartInfo } from './parts';
 
 /**
  * Educational content keyed by mesh-name prefix. A mesh named
@@ -13,7 +6,7 @@ export interface HeartPart {
  * If you swap in a different GLB, rename its meshes to these keys
  * (or add new entries) to keep tap-to-learn working.
  */
-export const HEART_PARTS: Record<string, HeartPart> = {
+export const HEART_PARTS: Record<string, PartInfo> = {
   LeftVentricle: {
     key: 'LeftVentricle',
     name: 'Left ventricle',
@@ -105,7 +98,3 @@ export const HEART_PARTS: Record<string, HeartPart> = {
     fact: 'Before birth it was an open vessel (the ductus arteriosus) letting blood bypass the lungs.',
   },
 };
-
-export function partKeyFromMeshName(name: string): string {
-  return name.split('_')[0];
-}
